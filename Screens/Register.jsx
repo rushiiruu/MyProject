@@ -26,7 +26,7 @@ const App = () => {
               styles.loginButtonWrapper,
               {backgroundColor: colors.primary},
             ]}>
-            <Text style={styles.loginButtonText}>Login</Text>
+            <Text style={styles.loginButtonText}>LogIn</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.loginButtonWrapper]}>
             <Text style={styles.signButtonText}>Signup</Text>
