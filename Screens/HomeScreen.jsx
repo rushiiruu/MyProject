@@ -167,6 +167,13 @@ const HomeScreen = ({navigation}) => {
           </Text>
         </View>
 
+        {/* Profile Icon in the top right */}
+        <TouchableOpacity
+          style={styles.profileIcon}
+          onPress={() => navigation.navigate('Scan')}>
+          <Icon name="person-circle" size={35} color="#FF4D6D" />
+        </TouchableOpacity>
+
         {/* Search Box */}
         <View style={styles.searchContainer}>
           <Icon
@@ -244,6 +251,11 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     color: '#000000',
+  },
+  profileIcon: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
   },
   curvedBox: {
     backgroundColor: '#687DBF',

@@ -9,7 +9,7 @@ import {View} from 'react-native';
 
 import HomeScreen from './Screens/HomeScreen';
 import ScanScreen from './Screens/ScanScreen';
-import ProfileScreen from './Screens/ProfileScreen';
+import HistoryScreen from './Screens/HistoryScreen'; // Changed this import
 import FindScreen from './Screens/FindScreen';
 import MedicineDetailsScreen from './Screens/MedicineDetailsScreen';
 
@@ -133,15 +133,15 @@ export default function Tab() {
       />
 
       <TabNav.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="History" // Changed this name to 'History'
+        component={HistoryScreen} // Changed this component to HistoryScreen
         options={{
           headerShown: false,
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center'}}>
               <Icon
-                name={focused ? 'person' : 'person-outline'}
-                size={20}
+                name={focused ? 'time' : 'time-outline'} // Optionally change icon to something appropriate
+                size={30}
                 color={focused ? '#D8385E' : 'rgba(216, 56, 94, 0.5)'}
               />
               {focused && <View style={styles.activeDot} />}
