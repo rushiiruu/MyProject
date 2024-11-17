@@ -84,7 +84,9 @@ const HomeScreen = ({navigation}) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF4D6D" />
-        <Text style={styles.loadingText}>Loading Medicine Database...</Text>
+        <Text style={styles.loadingText}>
+          Just A Moment - Unpacking Medicine Info!
+        </Text>
       </View>
     );
   }
@@ -170,7 +172,7 @@ const HomeScreen = ({navigation}) => {
         {/* Profile Icon in the top right */}
         <TouchableOpacity
           style={styles.profileIcon}
-          onPress={() => navigation.navigate('Scan')}>
+          onPress={() => navigation.navigate('Profile')}>
           <Icon name="person-circle" size={35} color="#FF4D6D" />
         </TouchableOpacity>
 
@@ -186,9 +188,10 @@ const HomeScreen = ({navigation}) => {
             ref={inputRef}
             style={styles.searchInput}
             placeholder="Search for medicines..."
+            placeholderTextColor="#929292"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            autoFocus={true}
+            autoFocus={false}
             enablesReturnKeyAutomatically={true}
           />
         </View>
@@ -220,22 +223,22 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 24,
     fontWeight: '400',
-    color: '#27100B',
+    color: '#261600',
     marginBottom: 0,
   },
   titleText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#27100B',
+    color: '#261600',
   },
   curaText: {
-    color: '#FF4D6D',
+    color: '#E34766',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FF4D6D', // Change to pink
+    backgroundColor: '#F2F2F2',
+    borderColor: '#F2F2F2',
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 10,
@@ -245,12 +248,12 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     marginRight: 5,
-    color: '#FF4D6D', // Change to pink
+    color: '#929292', // Change to pink
   },
   searchInput: {
     flex: 1,
     height: 40,
-    color: '#000000',
+    color: '#929292',
   },
   profileIcon: {
     position: 'absolute',
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   medicineBox: {
-    backgroundColor: '#FF4D6D',
+    backgroundColor: '#E34766',
     borderRadius: 15,
     padding: 15,
     marginRight: 15,
@@ -329,7 +332,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: '#0000',
   },
   loadingText: {
     marginTop: 10,

@@ -11,10 +11,61 @@ import {
   ScrollView,
   FlatList,
 } from 'react-native';
+
+import {Button, PermissionsAndroid, StatusBar} from 'react-native';
+import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
+
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import axios from 'axios';
 
+const requestCameraPermission = async () => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: 'Cool Photo App Camera Permission',
+        message:
+          'Cool Photo App needs access to your camera ' +
+          'so you can take awesome pictures.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can use the camera');
+    } else {
+      console.log('Camera permission denied');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+};
+
+const requestGallery = async () => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+      {
+        title: 'Cool Photo App Camera Permission',
+        message:
+          'Cool Photo App needs access to your camera ' +
+          'so you can take awesome pictures.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can use the camera');
+    } else {
+      console.log('Camera permission denied');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+};
 const API_URL = 'http://10.0.2.2:5000'; // Use this for Android emulator
 // const API_URL = 'http://localhost:5000'; // Use this for iOS simulator
 
@@ -24,51 +75,6 @@ const ScanScreen = () => {
   const [matchedMedicines, setMatchedMedicines] = useState([]);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    checkInitialPermissions();
-  }, []);
-
-  const checkInitialPermissions = async () => {
-    try {
-      const cameraPermission =
-        Platform.OS === 'ios'
-          ? PERMISSIONS.IOS.CAMERA
-          : PERMISSIONS.ANDROID.CAMERA;
-
-      const galleryPermission =
-        Platform.OS === 'ios'
-          ? PERMISSIONS.IOS.PHOTO_LIBRARY
-          : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
-
-      const [cameraResult, galleryResult] = await Promise.all([
-        request(cameraPermission),
-        request(galleryPermission),
-      ]);
-
-      if (
-        cameraResult !== RESULTS.GRANTED ||
-        galleryResult !== RESULTS.GRANTED
-      ) {
-        Alert.alert(
-          'Permissions Required',
-          'Both camera and gallery permissions are needed for full functionality.',
-          [
-            {
-              text: 'Grant Permissions',
-              onPress: () => checkInitialPermissions(),
-            },
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-          ],
-        );
-      }
-    } catch (error) {
-      console.error('Permission check error:', error);
-    }
-  };
 
   const handleImageCapture = async imageData => {
     try {
@@ -146,7 +152,7 @@ const ScanScreen = () => {
           [
             {
               text: 'OK',
-              onPress: () => launchCameraWithPermission(),
+              onPress: () => requestCameraPermission,
             },
           ],
         );
@@ -161,7 +167,7 @@ const ScanScreen = () => {
       const permission =
         Platform.OS === 'ios'
           ? PERMISSIONS.IOS.PHOTO_LIBRARY
-          : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
+          : PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
 
       const result = await request(permission);
 
@@ -182,7 +188,7 @@ const ScanScreen = () => {
           [
             {
               text: 'OK',
-              onPress: () => pickImageWithPermission(),
+              onPress: () => requestGallery(),
             },
           ],
         );

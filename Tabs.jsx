@@ -9,6 +9,7 @@ import {View} from 'react-native';
 
 import HomeScreen from './Screens/HomeScreen';
 import ScanScreen from './Screens/ScanScreen';
+import ProfileScreen from './Screens/ProfileScreen';
 import HistoryScreen from './Screens/HistoryScreen'; // Changed this import
 import FindScreen from './Screens/FindScreen';
 import MedicineDetailsScreen from './Screens/MedicineDetailsScreen';
@@ -31,6 +32,11 @@ function HomeStack() {
         name="MedicineDetailsScreen"
         component={MedicineDetailsScreen}
         options={{headerTitle: 'Medicine Details'}}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );
