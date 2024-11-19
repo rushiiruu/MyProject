@@ -27,6 +27,7 @@ const LogSign = ({onAuthSuccess}) => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // New state for showing password
 
   const auth = getAuth();
 
@@ -174,10 +175,19 @@ const LogSign = ({onAuthSuccess}) => {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword} // Toggle password visibility
                 placeholder="Password"
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color="#999"
+                />
+              </TouchableOpacity>
             </View>
             {passwordError ? (
               <Text style={styles.errorText}>{passwordError}</Text>
@@ -214,6 +224,9 @@ const LogSign = ({onAuthSuccess}) => {
 };
 
 const styles = StyleSheet.create({
+  eyeIcon: {
+    marginRight: 10,
+  },
   container: {
     flex: 1,
     backgroundColor: 'white',

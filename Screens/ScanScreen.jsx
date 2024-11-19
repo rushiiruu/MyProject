@@ -1,276 +1,61 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   Text,
+  TextInput,
   View,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
-  Image,
-  Platform,
-  ScrollView,
-  FlatList,
 } from 'react-native';
-
-import {Button, PermissionsAndroid, StatusBar} from 'react-native';
-import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
-
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import axios from 'axios';
 
-const requestCameraPermission = async () => {
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.CAMERA,
-      {
-        title: 'Cool Photo App Camera Permission',
-        message:
-          'Cool Photo App needs access to your camera ' +
-          'so you can take awesome pictures.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('You can use the camera');
-    } else {
-      console.log('Camera permission denied');
-    }
-  } catch (err) {
-    console.warn(err);
-  }
-};
-
-const requestGallery = async () => {
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-      {
-        title: 'Cool Photo App Camera Permission',
-        message:
-          'Cool Photo App needs access to your camera ' +
-          'so you can take awesome pictures.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('You can use the camera');
-    } else {
-      console.log('Camera permission denied');
-    }
-  } catch (err) {
-    console.warn(err);
-  }
-};
-const API_URL = 'http://10.0.2.2:5000'; // Use this for Android emulator
-// const API_URL = 'http://localhost:5000'; // Use this for iOS simulator
+const API_URL = 'http://127.0.0.1:5000'; // Update to the actual IP if using a physical device
 
 const ScanScreen = () => {
-  const [scanning, setScanning] = useState(false);
-  const [imageUri, setImageUri] = useState(null);
-  const [matchedMedicines, setMatchedMedicines] = useState([]);
-  const [selectedMedicine, setSelectedMedicine] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [responseText, setResponseText] = useState('');
 
-  const handleImageCapture = async imageData => {
+  const handleUrlSubmit = async () => {
+    if (!imageUrl) {
+      Alert.alert('Error', 'Please enter a valid URL.');
+      return;
+    }
+
     try {
-      setScanning(true);
-      setImageUri(imageData.uri);
-      setMatchedMedicines([]);
-      setSelectedMedicine(null);
-
-      const formData = new FormData();
-      formData.append('image', {
-        uri: imageData.uri,
-        type: 'image/jpeg',
-        name: 'medicine.jpg',
+      const response = await axios.post(`${API_URL}/process-image`, {
+        image: imageUrl, // Ensure the key matches what your Flask app expects
       });
 
-      const response = await axios.post(`${API_URL}/scan-medicine`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.medicines && response.data.medicines.length > 0) {
-        setMatchedMedicines(response.data.medicines);
-        // Automatically fetch details for the first match
-        fetchMedicineDetails(response.data.medicines[0].id);
+      if (response.data.text) {
+        setResponseText(response.data.text); // Extracted text from the Flask app
+      } else if (response.data.error) {
+        Alert.alert('Error', response.data.error); // Show error from Flask app
       } else {
-        Alert.alert('No Match', 'No matching medicines found in the database.');
+        Alert.alert('No Text Found', 'The image did not contain any text.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to process image. Please try again.');
+      Alert.alert('Error', 'Failed to process the image. Please try again.');
       console.error(error);
-    } finally {
-      setScanning(false);
     }
-  };
-
-  const fetchMedicineDetails = async medicineId => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_URL}/medicine/${medicineId}`);
-      setSelectedMedicine(response.data);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to fetch medicine details.');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const launchCameraWithPermission = async () => {
-    try {
-      const permission =
-        Platform.OS === 'ios'
-          ? PERMISSIONS.IOS.CAMERA
-          : PERMISSIONS.ANDROID.CAMERA;
-
-      const result = await request(permission);
-
-      if (result === RESULTS.GRANTED) {
-        const options = {
-          mediaType: 'photo',
-          quality: 1,
-          saveToPhotos: false,
-          cameraType: 'back',
-        };
-
-        const response = await launchCamera(options);
-        if (!response.didCancel && response.assets && response.assets[0]) {
-          handleImageCapture(response.assets[0]);
-        }
-      } else {
-        Alert.alert(
-          'Camera Permission Required',
-          'Please grant camera permission to scan medicines',
-          [
-            {
-              text: 'OK',
-              onPress: () => requestCameraPermission,
-            },
-          ],
-        );
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to access camera: ' + error.message);
-    }
-  };
-
-  const pickImageWithPermission = async () => {
-    try {
-      const permission =
-        Platform.OS === 'ios'
-          ? PERMISSIONS.IOS.PHOTO_LIBRARY
-          : PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
-
-      const result = await request(permission);
-
-      if (result === RESULTS.GRANTED) {
-        const options = {
-          mediaType: 'photo',
-          quality: 1,
-        };
-
-        const response = await launchImageLibrary(options);
-        if (!response.didCancel && response.assets && response.assets[0]) {
-          handleImageCapture(response.assets[0]);
-        }
-      } else {
-        Alert.alert(
-          'Gallery Permission Required',
-          'Please grant gallery access to select images',
-          [
-            {
-              text: 'OK',
-              onPress: () => requestGallery(),
-            },
-          ],
-        );
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to access gallery: ' + error.message);
-    }
-  };
-
-  const renderMedicineItem = ({item}) => (
-    <TouchableOpacity
-      style={styles.medicineItem}
-      onPress={() => fetchMedicineDetails(item.id)}>
-      <Text style={styles.medicineName}>{item.name}</Text>
-      <Text style={styles.medicineType}>{item.type}</Text>
-      <Text style={styles.medicineDescription}>{item.description}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderMedicineDetails = () => {
-    if (!selectedMedicine) return null;
-
-    return (
-      <ScrollView style={styles.detailsContainer}>
-        <Text style={styles.medicineTitle}>{selectedMedicine.name}</Text>
-        <View style={styles.infoSection}>
-          <Text style={styles.label}>Manufacturer:</Text>
-          <Text style={styles.value}>{selectedMedicine.manufacturer}</Text>
-        </View>
-        <View style={styles.infoSection}>
-          <Text style={styles.label}>Uses:</Text>
-          <Text style={styles.value}>{selectedMedicine.uses}</Text>
-        </View>
-        <View style={styles.infoSection}>
-          <Text style={styles.label}>Side Effects:</Text>
-          <Text style={styles.value}>{selectedMedicine.sideEffects}</Text>
-        </View>
-      </ScrollView>
-    );
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={launchCameraWithPermission}>
-          <Text style={styles.buttonText}>Camera</Text>
-        </TouchableOpacity>
+      <Text style={styles.title}>Enter Image URL</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter image URL here"
+        value={imageUrl}
+        onChangeText={setImageUrl}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleUrlSubmit}>
+        <Text style={styles.buttonText}>Submit</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={pickImageWithPermission}>
-          <Text style={styles.buttonText}>Gallery</Text>
-        </TouchableOpacity>
-      </View>
-
-      {imageUri && (
-        <View style={styles.imageContainer}>
-          <Image source={{uri: imageUri}} style={styles.previewImage} />
-        </View>
-      )}
-
-      {scanning ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={styles.loadingText}>Processing image...</Text>
-        </View>
-      ) : matchedMedicines.length > 0 ? (
-        <View style={styles.resultsContainer}>
-          <Text style={styles.sectionTitle}>Matched Medicines:</Text>
-          <FlatList
-            data={matchedMedicines}
-            renderItem={renderMedicineItem}
-            keyExtractor={item => item.id}
-            style={styles.matchesList}
-          />
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : (
-            renderMedicineDetails()
-          )}
+      {responseText ? (
+        <View style={styles.responseContainer}>
+          <Text style={styles.responseText}>Extracted Text:</Text>
+          <Text style={styles.responseContent}>{responseText}</Text>
         </View>
       ) : null}
     </View>
@@ -282,95 +67,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
     padding: 20,
+    justifyContent: 'center',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#CCC',
+    borderRadius: 8,
+    padding: 10,
     marginBottom: 20,
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#007AFF',
     padding: 15,
     borderRadius: 10,
-    flex: 0.48,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
   },
-  imageContainer: {
-    aspectRatio: 1,
-    width: '100%',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginBottom: 20,
+  responseContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  resultsContainer: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 20,
+  responseText: {
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  matchesList: {
-    maxHeight: 200,
-    marginBottom: 20,
-  },
-  medicineItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  medicineName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  medicineType: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  medicineDescription: {
-    fontSize: 14,
-    color: '#444',
-    marginTop: 4,
-  },
-  detailsContainer: {
-    flex: 1,
-  },
-  medicineTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  infoSection: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 5,
-  },
-  value: {
+  responseContent: {
     fontSize: 16,
     color: '#333',
   },

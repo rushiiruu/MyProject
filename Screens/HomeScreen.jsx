@@ -205,7 +205,7 @@ const HomeScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F6F6F6',
   },
   staticContent: {
     padding: 20,
@@ -237,14 +237,15 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F2',
+    backgroundColor: '#FFF',
     borderColor: '#F2F2F2',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 15,
     paddingHorizontal: 10,
     height: 40,
     marginBottom: 20,
     marginHorizontal: 10,
+    elevation: 3,
   },
   searchIcon: {
     marginRight: 5,
@@ -347,19 +348,22 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     padding: 15,
-    backgroundColor: '#FF6B8A',
+    backgroundColor: 'white',
     marginVertical: 5,
     borderRadius: 8,
+    marginHorizontal: 10,
+    elevation: 3,
   },
+
   medicineName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#414141',
   },
   uses: {
     marginTop: 5,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#414141',
   },
   noResults: {
     textAlign: 'center',
