@@ -38,6 +38,7 @@ function HomeStack() {
         component={ProfileScreen}
         options={{headerShown: false}}
       />
+      <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
     </Stack.Navigator>
   );
 }
@@ -55,9 +56,13 @@ function FindStack() {
         component={MedicineDetailsScreen}
         options={{headerTitle: 'Medicine Details'}}
       />
+      <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
     </Stack.Navigator>
   );
 }
+
+
+
 
 export default function Tab() {
   const [isScanSelected, setIsScanSelected] = useState(false);
@@ -139,14 +144,14 @@ export default function Tab() {
       />
 
       <TabNav.Screen
-        name="History" // Changed this name to 'History'
-        component={HistoryScreen} // Changed this component to HistoryScreen
+        name="Favorites" // Updated tab name to Favorites
+        component={HistoryScreen} // Still uses HistoryScreen as the component
         options={{
           headerShown: false,
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center'}}>
               <Icon
-                name={focused ? 'time' : 'time-outline'} // Optionally change icon to something appropriate
+                name={focused ? 'heart' : 'heart-outline'} // Updated icon to heart
                 size={30}
                 color={focused ? '#D8385E' : 'rgba(216, 56, 94, 0.5)'}
               />

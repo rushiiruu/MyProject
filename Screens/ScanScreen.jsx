@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,13 +13,13 @@ import {
 import axios from 'axios';
 import * as Papa from 'papaparse';
 import RNFS from 'react-native-fs';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-import { PermissionsAndroid } from 'react-native';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import {PermissionsAndroid} from 'react-native';
 
 const API_URL = 'http://172.17.27.237:5000';
 
-const ScanScreen = ({ navigation }) => {
+const ScanScreen = ({navigation}) => {
   const [imageUrl, setImageUrl] = useState('');
   const [responseText, setResponseText] = useState('');
   const [csvData, setCsvData] = useState([]);
@@ -31,7 +31,7 @@ const ScanScreen = ({ navigation }) => {
   // Load CSV File
   const loadCSV = async () => {
     try {
-      const csvContent = await RNFS.readFileAssets('Medicine_Details.csv', 'utf8');
+      const csvContent = await RNFS.readFileAssets('Medicine_Info.csv', 'utf8');
       Papa.parse(csvContent, {
         header: true,
         complete: result => {
@@ -90,17 +90,17 @@ const ScanScreen = ({ navigation }) => {
   };
 
   // Function to tokenize text into individual words
-  const tokenizeText = (text) => {
+  const tokenizeText = text => {
     const tokens = text
       .split(/[\s,.-]+/)
       .filter(token => token.length > 2)
       .map(token => token.trim().toLowerCase());
-    
+
     return [...new Set(tokens)];
   };
 
   // Process image and extract text
-  const processImage = async (imageData) => {
+  const processImage = async imageData => {
     try {
       setScanning(true);
       const formData = new FormData();
@@ -110,19 +110,26 @@ const ScanScreen = ({ navigation }) => {
         name: 'medicine.jpg',
       });
 
-      const response = await axios.post(`${API_URL}/process-image`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+      const response = await axios.post(
+        `http://192.168.137.213:5000/process-image`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         },
-      });
+      );
 
       if (response.data.tokens) {
         setResponseText(response.data.raw_text); // Set the raw text response
-        const tokens = response.data.tokens;    // Extract tokens from the response
-        setExtractedTokens(tokens);             // Set tokens to the state
-        searchCsvWithTokens(tokens);            // Search CSV with extracted tokens
+        const tokens = response.data.tokens; // Extract tokens from the response
+        setExtractedTokens(tokens); // Set tokens to the state
+        searchCsvWithTokens(tokens); // Search CSV with extracted tokens
       } else {
-        Alert.alert('No Tokens Found', 'No tokens could be extracted from the image.');
+        Alert.alert(
+          'No Tokens Found',
+          'No tokens could be extracted from the image.',
+        );
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to process the image. Please try again.');
@@ -135,9 +142,10 @@ const ScanScreen = ({ navigation }) => {
   // Launch Camera
   const launchCameraWithPermission = async () => {
     try {
-      const permission = Platform.OS === 'ios'
-        ? PERMISSIONS.IOS.CAMERA
-        : PERMISSIONS.ANDROID.CAMERA;
+      const permission =
+        Platform.OS === 'ios'
+          ? PERMISSIONS.IOS.CAMERA
+          : PERMISSIONS.ANDROID.CAMERA;
 
       const result = await request(permission);
 
@@ -174,9 +182,10 @@ const ScanScreen = ({ navigation }) => {
   // Launch Gallery
   const pickImageWithPermission = async () => {
     try {
-      const permission = Platform.OS === 'ios'
-        ? PERMISSIONS.IOS.PHOTO_LIBRARY
-        : PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
+      const permission =
+        Platform.OS === 'ios'
+          ? PERMISSIONS.IOS.PHOTO_LIBRARY
+          : PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
 
       const result = await request(permission);
 
@@ -209,30 +218,33 @@ const ScanScreen = ({ navigation }) => {
   };
 
   // Search CSV Data with Extracted Tokens
-  const searchCsvWithTokens = (tokens) => {
+  const searchCsvWithTokens = tokens => {
     if (!tokens.length) return;
 
     const searchResults = csvData.filter(item => {
       const medicineName = item['Medicine Name']?.toLowerCase() || '';
-      
+
       return tokens.some(token => {
-        return medicineName.includes(` ${token} `) ||
-               medicineName.startsWith(`${token} `) ||
-               medicineName.endsWith(` ${token}`) ||
-               medicineName === token;
+        return (
+          medicineName.includes(` ${token} `) ||
+          medicineName.startsWith(`${token} `) ||
+          medicineName.endsWith(` ${token}`) ||
+          medicineName === token
+        );
       });
     });
 
     setFilteredData(searchResults);
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({item}) => {
     const medicineName = item['Medicine Name'].toLowerCase();
-    const matchedTokens = extractedTokens.filter(token =>
-      medicineName.includes(` ${token} `) || 
-      medicineName.startsWith(`${token} `) || 
-      medicineName.endsWith(` ${token}`) ||
-      medicineName === token
+    const matchedTokens = extractedTokens.filter(
+      token =>
+        medicineName.includes(` ${token} `) ||
+        medicineName.startsWith(`${token} `) ||
+        medicineName.endsWith(` ${token}`) ||
+        medicineName === token,
     );
 
     return (
@@ -240,9 +252,8 @@ const ScanScreen = ({ navigation }) => {
         style={styles.itemContainer}
         onPress={() => {
           // Navigate to MedicineDetailsScreen and pass the medicine data
-          navigation.navigate('MedicineDetailsScreen', { medicine: item });
-        }}
-      >
+          navigation.navigate('MedicineDetailsScreen', {medicine: item});
+        }}>
         <Text style={styles.medicineName}>{item['Medicine Name']}</Text>
         <Text style={styles.uses}>{item['Uses']}</Text>
         <Text style={styles.matchInfo}>

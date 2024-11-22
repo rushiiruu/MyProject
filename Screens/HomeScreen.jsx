@@ -24,10 +24,7 @@ const HomeScreen = ({navigation}) => {
 
   const loadCSV = async () => {
     try {
-      const csvContent = await RNFS.readFileAssets(
-        'Medicine_Details.csv',
-        'utf8',
-      );
+      const csvContent = await RNFS.readFileAssets('Medicine_Info.csv', 'utf8');
       Papa.parse(csvContent, {
         header: true,
         complete: result => {
@@ -333,7 +330,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0000',
+    backgroundColor: 'white',
   },
   loadingText: {
     marginTop: 10,
