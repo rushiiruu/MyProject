@@ -34,18 +34,26 @@ const ProfileScreen = ({navigation}) => {
       {/* Display user information */}
       {user && (
         <View style={styles.infoContainer}>
+          {/* Centered Username */}
           <Text style={styles.name}>{user.displayName || 'N/A'}</Text>
+
+          {/* Line Under Username */}
+          <View style={styles.usernameLine} />
+
+          {/* Left-aligned email and password */}
           <Text style={styles.label}>EMAIL</Text>
           <Text style={styles.value}>{user.email}</Text>
-          <Text style={styles.label}>PASSWORD</Text>
+
+          {/* Increased space between email and password */}
+          <Text style={[styles.label, styles.additionalSpacing]}>PASSWORD</Text>
           <Text style={styles.value}>********</Text>
+
+          {/* Log Out Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
         </View>
       )}
-
-      {/* Log Out Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -68,16 +76,24 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   infoContainer: {
-    marginTop: 80,
+    marginTop: 230,
     width: '100%', // Ensure full width
-    alignItems: 'flex-start', // Align content to the left
     paddingHorizontal: 20, // Add padding for left margin
   },
   name: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 20,
+    marginBottom: 10, // Reduced margin bottom for less space between name and line
+    textAlign: 'center', // Center align the username text
+  },
+  usernameLine: {
+    // UserName Line
+    width: '80%', // Line width
+    height: 1, // Thickness of the line
+    backgroundColor: '#DDD', // Line color
+    alignSelf: 'center', // Center the line under the username
+    marginBottom: 35, // Space between line and email section
   },
   label: {
     fontSize: 12,
@@ -95,6 +111,9 @@ const styles = StyleSheet.create({
     width: '100%', // Full width
     textAlign: 'left', // Align text to the left
   },
+  additionalSpacing: {
+    marginTop: 30, // Increased space between email and password
+  },
   editButton: {
     marginTop: 30,
     paddingVertical: 10,
@@ -111,7 +130,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
-    bottom: 70,
+    top: 245,
     alignSelf: 'center',
     backgroundColor: '#FF4D6D',
     paddingVertical: 12,
