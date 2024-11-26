@@ -17,7 +17,6 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {PermissionsAndroid} from 'react-native';
 
-const API_URL = 'http://172.17.27.237:5000';
 
 const ScanScreen = ({navigation}) => {
   const [imageUrl, setImageUrl] = useState('');
@@ -111,7 +110,7 @@ const ScanScreen = ({navigation}) => {
       });
 
       const response = await axios.post(
-        `http://192.168.137.213:5000/process-image`,
+        `https://cura-deploy.onrender.com/process-image`,
         formData,
         {
           headers: {

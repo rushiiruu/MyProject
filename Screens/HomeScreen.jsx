@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   profileIcon: {
     position: 'absolute',
-    top: 40,
+    top: 60,
     right: 20,
   },
   curvedBox: {

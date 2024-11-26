@@ -82,6 +82,9 @@ const HistoryScreen = ({navigation, route}) => {
           </TouchableOpacity>
         ))
       )}
+      <Text style={styles.Blank}>
+        HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+      </Text>
     </ScrollView>
   );
 };
@@ -127,6 +130,10 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 20,
+  },
+  Blank: {
+    marginBottom: 100,
+    color: 'white',
   },
 });
 
