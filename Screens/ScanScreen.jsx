@@ -110,7 +110,7 @@ const ScanScreen = ({navigation}) => {
       });
 
       const response = await axios.post(
-        `https://cura-deploy.onrender.com/process-image`,
+        `https://rusyl.pythonanywhere.com/process-image`,
         formData,
         {
           headers: {

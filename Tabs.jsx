@@ -61,6 +61,23 @@ function FindStack() {
   );
 }
 
+function FavoritesStack(){
+  return (
+    <Stack.Navigator >
+      <Stack.Screen
+        name="HistoryScreen"
+        component={HistoryScreen}
+        options={{headerShown: false}} 
+      />
+      <Stack.Screen
+        name="MedicineDetailsScreen"
+        component={MedicineDetailsScreen}
+        options={{headerTitle: 'Medicine Details'}}
+      />
+    </Stack.Navigator>
+  );
+}
+
 
 
 
@@ -103,10 +120,15 @@ export default function Tab() {
             </View>
           ),
         }}
-        listeners={{
+        listeners={({navigation}) => ({
           focus: () => setIsScanSelected(false),
-        }}
+          tabPress: () => {
+            // Navigate to the initial route of the stack
+            navigation.navigate('HomeScreen');
+          },
+        })}
       />
+
 
       <TabNav.Screen
         name="Scan"
@@ -137,15 +159,18 @@ export default function Tab() {
             </View>
           ),
         }}
-        listeners={{
+        listeners={({navigation}) => ({
           focus: () => setIsScanSelected(true),
           blur: () => setIsScanSelected(false),
-        }}
+          tabPress: () => {
+            navigation.navigate('Scan'); // Ensure the name matches your registered screen
+          },
+        })}
       />
 
       <TabNav.Screen
         name="Favorites" // Updated tab name to Favorites
-        component={HistoryScreen} // Still uses HistoryScreen as the component
+        component={FavoritesStack} // Still uses HistoryScreen as the component
         options={{
           headerShown: false,
           tabBarIcon: ({focused}) => (
@@ -159,9 +184,16 @@ export default function Tab() {
             </View>
           ),
         }}
-        listeners={{
+        //listeners={{
+          //focus: () => setIsScanSelected(false),
+        //}}
+        listeners={({navigation}) => ({
           focus: () => setIsScanSelected(false),
-        }}
+          tabPress: () => {
+            // Navigate to the initial route of the stack
+            navigation.navigate('HistoryScreen');
+          },
+        })}
       />
     </TabNav.Navigator>
   );

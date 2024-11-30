@@ -54,7 +54,7 @@ const HistoryScreen = ({navigation, route}) => {
   };
 
   const handleMedicinePress = medicine => {
-    navigation.navigate('MedicineDetails', {medicine});
+    navigation.navigate('MedicineDetailsScreen', {medicine});
   };
 
   if (!userId) {
@@ -82,9 +82,6 @@ const HistoryScreen = ({navigation, route}) => {
           </TouchableOpacity>
         ))
       )}
-      <Text style={styles.Blank}>
-        HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-      </Text>
     </ScrollView>
   );
 };
@@ -130,10 +127,6 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 20,
-  },
-  Blank: {
-    marginBottom: 100,
-    color: 'white',
   },
 });
 

@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import {
   StyleSheet,
   Text,
@@ -14,12 +13,15 @@ import React, {useState, useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import RNFS from 'react-native-fs';
 import * as Papa from 'papaparse';
+import debounce from 'lodash.debounce';
+import {useFocusEffect} from '@react-navigation/native';
 
 const HomeScreen = ({navigation}) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [localQuery, setLocalQuery] = useState(''); // Immediate input update
   const inputRef = useRef(null);
 
   const loadCSV = async () => {
@@ -46,13 +48,10 @@ const HomeScreen = ({navigation}) => {
     loadCSV();
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      if (data.length === 0) loadCSV();
-    });
-
-    return unsubscribe;
-  }, [navigation, data]);
+  // Debounce search query updates
+  const handleSearch = debounce((query) => {
+    setSearchQuery(query);
+  }, 300);
 
   useEffect(() => {
     if (searchQuery.trim() !== '') {
@@ -65,6 +64,14 @@ const HomeScreen = ({navigation}) => {
       setFilteredData([]);
     }
   }, [searchQuery, data]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset search query and input when screen regains focus
+      setSearchQuery('');
+      setLocalQuery('');
+    }, [])
+  );
 
   const renderItem = ({item}) => (
     <TouchableOpacity
@@ -103,10 +110,14 @@ const HomeScreen = ({navigation}) => {
         />
       );
     }
-
+  
+    // Filter for specific medicines
+    const popularMedicines = data.filter(item => 
+      ['Biogesic Paracetamol 500 mg', 'Alaxan FR', 'RiteMED Amoxicillin 500 mg'].includes(item['Medicine Name'])
+    );
+  
     return (
       <>
-        {/* Curved Box with Image and Scan CTA */}
         <View style={styles.curvedBox}>
           <Image
             source={require('../src/assets/fem.png')}
@@ -123,57 +134,43 @@ const HomeScreen = ({navigation}) => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Popular Searches Text */}
         <Text style={styles.PopularText}>Popular Searches</Text>
-
-        {/* Horizontal ScrollView for Medicines */}
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.medicinesContainer}>
-          <View style={styles.medicineBox}>
-            <Text style={styles.medicineTitle}>Paracetamol</Text>
-            <Text style={styles.medicineDescription}>
-              Pain reliever and fever reducer.
-            </Text>
-          </View>
-          <View style={styles.medicineBox}>
-            <Text style={styles.medicineTitle}>Ibuprofen</Text>
-            <Text style={styles.medicineDescription}>
-              Anti-inflammatory and pain relief.
-            </Text>
-          </View>
-          <View style={styles.medicineBox}>
-            <Text style={styles.medicineTitle}>Amoxicillin</Text>
-            <Text style={styles.medicineDescription}>
-              Antibiotic used to treat infections.
-            </Text>
-          </View>
-        </ScrollView>
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  style={styles.medicinesContainer}>
+  {popularMedicines.map((item, index) => (
+    <TouchableOpacity
+      key={index}
+      style={styles.medicineBox}
+      onPress={() => navigation.navigate('MedicineDetailsScreen', {medicine: item})}>
+      <ScrollView contentContainerStyle={styles.scrollableContent}>
+        <Text style={styles.medicineTitle}>{item['Medicine Name']}</Text>
+        <Text style={styles.medicineDescription}>{item['Uses']}</Text>
+      </ScrollView>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
+
       </>
     );
   };
+  
 
   return (
     <View style={styles.container}>
       <View style={styles.staticContent}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Hi there, </Text>
           <Text style={styles.titleText}>
             Welcome to <Text style={styles.curaText}>Cura</Text>!
           </Text>
         </View>
-
-        {/* Profile Icon in the top right */}
         <TouchableOpacity
           style={styles.profileIcon}
           onPress={() => navigation.navigate('Profile')}>
           <Icon name="person-circle" size={35} color="#FF4D6D" />
         </TouchableOpacity>
-
-        {/* Search Box */}
         <View style={styles.searchContainer}>
           <Icon
             name="search"
@@ -186,15 +183,19 @@ const HomeScreen = ({navigation}) => {
             style={styles.searchInput}
             placeholder="Search for medicines..."
             placeholderTextColor="#929292"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={localQuery}
+            onChangeText={(text) => {
+              setLocalQuery(text); // Update input immediately
+              handleSearch(text);  // Debounce actual search update
+            }}
             autoFocus={false}
             enablesReturnKeyAutomatically={true}
           />
         </View>
       </View>
-
-      <View style={styles.dynamicContent}>{renderContent()}</View>
+      <View style={styles.dynamicContent}>{renderContent()}
+        <Text style={styles.Text}>HELLOOOOOOOOOOOOOOOOOOOOOOOO</Text>
+      </View>
     </View>
   );
 };
@@ -231,6 +232,11 @@ const styles = StyleSheet.create({
   curaText: {
     color: '#E34766',
   },
+  scrollableContent: {
+    flexGrow: 1,
+    paddingBottom: 10, // Optional for spacing
+  },
+  
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -255,7 +261,7 @@ const styles = StyleSheet.create({
   },
   profileIcon: {
     position: 'absolute',
-    top: 60,
+    top: 40,
     right: 20,
   },
   curvedBox: {
@@ -303,19 +309,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#27100B',
-    marginTop: 20,
+    marginTop: 15,
     marginLeft: 10,
   },
-  medicinesContainer: {
-    marginTop: 30,
-  },
+
   medicineBox: {
     backgroundColor: '#E34766',
     borderRadius: 15,
     padding: 15,
     marginRight: 15,
     width: 150,
-    height: 150,
+    height: 230,
   },
   medicineTitle: {
     fontSize: 18,
