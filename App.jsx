@@ -1,10 +1,11 @@
-import React, {useState, useEffect} from 'react';
-import {AppRegistry} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { AppRegistry } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
+import SplashScreen from './Screens/SplashScreen';
 import LogSign from './Screens/LogSign';
 import Tabs from './Tabs';
 
@@ -23,43 +24,52 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
-const auth = firebase.auth();
-
 const Stack = createNativeStackNavigator();
 
 function App() {
+  const [isFirstLaunch, setIsFirstLaunch] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Subscribe to auth state changes
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      setIsAuthenticated(!!user);
-      setIsLoading(false);
+    const unsubscribe = firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        // If no user is logged in, redirect to Splash screen
+        setIsAuthenticated(false);
+        setIsFirstLaunch(true);
+      } else {
+        // If a user is logged in, navigate to the Tabs screen
+        setIsAuthenticated(true);
+        setIsFirstLaunch(false);
+      }
     });
 
-    // Cleanup subscription
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (navigation) => {
     setIsAuthenticated(true);
+    setIsFirstLaunch(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Tabs' }],
+    });
   };
-
-  if (isLoading) {
-    return null; // You could add a loading spinner here
-  }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
-        {!isAuthenticated ? (
-          <Stack.Screen name="LogSign">
-            {props => <LogSign {...props} onAuthSuccess={handleAuthSuccess} />}
-          </Stack.Screen>
-        ) : (
-          <Stack.Screen name="Tabs" component={Tabs} />
-        )}
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={isFirstLaunch ? 'Splash' : isAuthenticated ? 'Tabs' : 'LogSign'}>
+        {isFirstLaunch && <Stack.Screen name="Splash" component={SplashScreen} />}
+        <Stack.Screen name="LogSign">
+          {props => (
+            <LogSign
+              {...props}
+              onAuthSuccess={(navigation) => handleAuthSuccess(props.navigation)}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Tabs" component={Tabs} />
       </Stack.Navigator>
     </NavigationContainer>
   );

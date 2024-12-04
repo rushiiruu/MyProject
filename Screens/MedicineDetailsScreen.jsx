@@ -87,9 +87,20 @@ const MedicineDetailsScreen = ({route, navigation}) => {
       <Text style={styles.text}>{medicine.Side_effects}</Text>
       <Text style={styles.label}>Manufacturer:</Text>
       <Text style={styles.text}>{medicine.Manufacturer}</Text>
+
+      {/* Disclaimer message */}
+      <View style={styles.disclaimerContainer}>
+        <Text style={styles.disclaimerText}>
+          Disclaimer: This information is for general reference purposes only.
+          Please consult with a qualified healthcare provider before using any
+          medication.
+        </Text>
+        
+      </View>
     </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -126,6 +137,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#424242',
     marginBottom: 10,
+  },
+  // Disclaimer styling
+  disclaimerContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginBottom: 100,
+  },
+  disclaimerText: {
+    fontSize: 14,
+    color: '#555',
+    textAlign: 'center',
+    
   },
 });
 

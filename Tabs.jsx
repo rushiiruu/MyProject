@@ -78,6 +78,22 @@ function FavoritesStack(){
   );
 }
 
+function ScanStack(){
+  return (
+    <Stack.Navigator >
+      <Stack.Screen
+        name="ScanScreen"
+        component={ScanScreen}
+        options={{headerShown: false}} 
+      />
+      <Stack.Screen
+        name="MedicineDetailsScreen"
+        component={MedicineDetailsScreen}
+        options={{headerTitle: 'Medicine Details'}}
+      />
+    </Stack.Navigator>
+  );
+}
 
 
 
@@ -132,7 +148,7 @@ export default function Tab() {
 
       <TabNav.Screen
         name="Scan"
-        component={ScanScreen}
+        component={ScanStack}
         options={{
           headerShown: false,
           tabBarIcon: ({focused}) => (

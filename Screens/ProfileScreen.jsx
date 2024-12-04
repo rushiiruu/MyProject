@@ -1,17 +1,27 @@
-import React from 'react';
-import {StyleSheet, Text, View, TouchableOpacity, Alert} from 'react-native';
-import {getAuth, signOut} from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const ProfileScreen = ({navigation}) => {
+const ProfileScreen = ({ navigation }) => {
+  const [user, setUser] = useState(null); // Manage user state
   const auth = getAuth();
-  const user = auth.currentUser; // Get current user details
+
+  useEffect(() => {
+    // Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser); // Set user data based on authentication state
+    });
+
+    // Cleanup on component unmount
+    return () => unsubscribe();
+  }, [auth]);
 
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
         Alert.alert('Logged Out', 'You have been logged out successfully');
-        navigation.replace('Login'); // Redirect to login or home screen after logout
+        navigation.replace('LogSign'); // Redirect to login screen after logout
       })
       .catch(error => {
         console.error('Logout error:', error);
@@ -32,27 +42,23 @@ const ProfileScreen = ({navigation}) => {
       <Text style={styles.title}>Profile</Text>
 
       {/* Display user information */}
-      {user && (
+      {user ? (
         <View style={styles.infoContainer}>
-          {/* Centered Username */}
           <Text style={styles.name}>{user.displayName || 'N/A'}</Text>
-
-          {/* Line Under Username */}
           <View style={styles.usernameLine} />
 
-          {/* Left-aligned email and password */}
           <Text style={styles.label}>EMAIL</Text>
           <Text style={styles.value}>{user.email}</Text>
 
-          {/* Increased space between email and password */}
           <Text style={[styles.label, styles.additionalSpacing]}>PASSWORD</Text>
           <Text style={styles.value}>********</Text>
 
-          {/* Log Out Button */}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
         </View>
+      ) : (
+        <Text style={styles.noUserText}>No user logged in</Text>
       )}
     </View>
   );
@@ -77,30 +83,29 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginTop: 230,
-    width: '100%', // Ensure full width
-    paddingHorizontal: 20, // Add padding for left margin
+    width: '100%',
+    paddingHorizontal: 20,
   },
   name: {
     fontSize: 30,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10, // Reduced margin bottom for less space between name and line
-    textAlign: 'center', // Center align the username text
+    marginBottom: 10,
+    textAlign: 'center',
   },
   usernameLine: {
-    // UserName Line
-    width: '80%', // Line width
-    height: 1, // Thickness of the line
-    backgroundColor: '#DDD', // Line color
-    alignSelf: 'center', // Center the line under the username
-    marginBottom: 35, // Space between line and email section
+    width: '80%',
+    height: 1,
+    backgroundColor: '#DDD',
+    alignSelf: 'center',
+    marginBottom: 35,
   },
   label: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#999',
     marginTop: 10,
-    textAlign: 'left', // Align text to the left
+    textAlign: 'left',
   },
   value: {
     fontSize: 16,
@@ -108,25 +113,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#DDD',
     paddingBottom: 5,
-    width: '100%', // Full width
-    textAlign: 'left', // Align text to the left
+    width: '100%',
+    textAlign: 'left',
   },
   additionalSpacing: {
-    marginTop: 30, // Increased space between email and password
-  },
-  editButton: {
     marginTop: 30,
-    paddingVertical: 10,
-    paddingHorizontal: 40,
-    borderWidth: 1,
-    borderColor: '#FF4D6D',
-    borderRadius: 25,
-  },
-  editButtonText: {
-    color: '#FF4D6D',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
   },
   logoutButton: {
     position: 'absolute',
@@ -141,6 +132,12 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  noUserText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 

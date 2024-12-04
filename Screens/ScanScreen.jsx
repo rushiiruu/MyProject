@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,7 +16,8 @@ import RNFS from 'react-native-fs';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {PermissionsAndroid} from 'react-native';
-
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ScanScreen = ({navigation}) => {
   const [imageUrl, setImageUrl] = useState('');
@@ -26,6 +27,53 @@ const ScanScreen = ({navigation}) => {
   const [extractedTokens, setExtractedTokens] = useState([]);
   const [scanning, setScanning] = useState(false);
   const [imageUri, setImageUri] = useState(null);
+  const [topMedicine, setTopMedicine] = useState(null);
+
+  // Tokenize text function (updated to remove numeric tokens)
+  const tokenizeText = text => {
+    // List of common generic medicine terms to remove
+    const genericTerms = [
+      'capsule', 'capsules', 
+      'tablet', 'tablets', 
+      'pill', 'pills', 
+      'medicine', 'medicinal',
+      'drug', 'drugs',
+      'syrup','inhaler','drops'
+    ];
+  
+    const tokens = text
+      .split(/[\s,.-]+/)
+      .filter(token => !/\d/.test(token)) // Remove numeric tokens
+      .map(token => token.trim().toLowerCase()) // Trim and convert to lowercase
+      .filter(token => 
+        token.length > 4 && // Keep tokens longer than 4 characters
+        !genericTerms.includes(token) // Remove generic terms
+      );
+  
+    return [...new Set(tokens)]; // Remove duplicates
+  };
+
+  // Find medicine with most matched tokens
+  const findMedicineWithMostTokens = (data, tokens) => {
+    if (!tokens.length) return null;
+
+    const searchResults = data
+      .map(item => {
+        const medicineName = item['Medicine Name']?.toLowerCase() || '';
+        const matchedTokens = tokens.filter(token =>
+          medicineName.includes(token)
+        );
+        return {
+          ...item,
+          matchCount: matchedTokens.length,
+          matchedTokens,
+        };
+      })
+      .filter(item => item.matchCount > 0)
+      .sort((a, b) => b.matchCount - a.matchCount);
+
+    return searchResults[0]; // Return the medicine with the most tokens
+  };
 
   // Load CSV File
   const loadCSV = async () => {
@@ -44,6 +92,24 @@ const ScanScreen = ({navigation}) => {
       console.error('Error loading CSV:', error);
     }
   };
+
+  // Reset screen state
+  const resetScreen = () => {
+    setImageUrl('');
+    setResponseText('');
+    setFilteredData([]);
+    setExtractedTokens([]);
+    setScanning(false);
+    setImageUri(null);
+    setTopMedicine(null);
+  };
+
+  // Use Focus Effect to reset screen when tab is clicked
+  useFocusEffect(
+    useCallback(() => {
+      resetScreen();
+    }, [])
+  );
 
   useEffect(() => {
     loadCSV();
@@ -88,16 +154,6 @@ const ScanScreen = ({navigation}) => {
     }
   };
 
-  // Function to tokenize text into individual words
-  const tokenizeText = text => {
-    const tokens = text
-      .split(/[\s,.-]+/)
-      .filter(token => token.length > 2)
-      .map(token => token.trim().toLowerCase());
-
-    return [...new Set(tokens)];
-  };
-
   // Process image and extract text
   const processImage = async imageData => {
     try {
@@ -110,7 +166,7 @@ const ScanScreen = ({navigation}) => {
       });
 
       const response = await axios.post(
-        `https://rusyl.pythonanywhere.com/process-image`,
+        `http://47.129.197.5:5000//process-image`,
         formData,
         {
           headers: {
@@ -120,10 +176,14 @@ const ScanScreen = ({navigation}) => {
       );
 
       if (response.data.tokens) {
-        setResponseText(response.data.raw_text); // Set the raw text response
-        const tokens = response.data.tokens; // Extract tokens from the response
-        setExtractedTokens(tokens); // Set tokens to the state
-        searchCsvWithTokens(tokens); // Search CSV with extracted tokens
+        setResponseText(response.data.raw_text);
+        const tokens = tokenizeText(response.data.raw_text);
+        setExtractedTokens(tokens);
+        searchCsvWithTokens(tokens);
+
+        // Find and set the top medicine
+        const topMatchedMedicine = findMedicineWithMostTokens(csvData, tokens);
+        setTopMedicine(topMatchedMedicine);
       } else {
         Alert.alert(
           'No Tokens Found',
@@ -220,18 +280,20 @@ const ScanScreen = ({navigation}) => {
   const searchCsvWithTokens = tokens => {
     if (!tokens.length) return;
 
-    const searchResults = csvData.filter(item => {
-      const medicineName = item['Medicine Name']?.toLowerCase() || '';
-
-      return tokens.some(token => {
-        return (
-          medicineName.includes(` ${token} `) ||
-          medicineName.startsWith(`${token} `) ||
-          medicineName.endsWith(` ${token}`) ||
-          medicineName === token
+    const searchResults = csvData
+      .map(item => {
+        const medicineName = item['Medicine Name']?.toLowerCase() || '';
+        const matchedTokens = tokens.filter(token =>
+          medicineName.includes(token)
         );
-      });
-    });
+        return {
+          ...item,
+          matchCount: matchedTokens.length,
+          matchedTokens,
+        };
+      })
+      .filter(item => item.matchCount > 0)
+      .sort((a, b) => b.matchCount - a.matchCount);
 
     setFilteredData(searchResults);
   };
@@ -250,51 +312,80 @@ const ScanScreen = ({navigation}) => {
       <TouchableOpacity
         style={styles.itemContainer}
         onPress={() => {
-          // Navigate to MedicineDetailsScreen and pass the medicine data
           navigation.navigate('MedicineDetailsScreen', {medicine: item});
         }}>
         <Text style={styles.medicineName}>{item['Medicine Name']}</Text>
         <Text style={styles.uses}>{item['Uses']}</Text>
-        <Text style={styles.matchInfo}>
-          Matched terms: {matchedTokens.join(', ')}
-        </Text>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={launchCameraWithPermission}>
-          <Text style={styles.buttonText}>Camera</Text>
-        </TouchableOpacity>
+      {/* Conditionally render header and buttons only when no results are shown */}
+      {filteredData.length === 0 && (
+        <>
+          {/* Header Section with Image Preview */}
+          <View style={styles.headerContainer}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.previewImage} />
+            ) : (
+              <Image
+                source={require('../src/assets/ScanPreviewPlaceholder.png')}
+                style={styles.previewImage}
+              />
+            )}
+            <Text style={styles.scanText}>
+              Scan or Upload-get the{' '}
+              <Text style={styles.highlightedText}>info</Text> you need in a{' '}
+              <Text style={styles.highlightedText}>snap</Text>!
+            </Text>
+          </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={pickImageWithPermission}>
-          <Text style={styles.buttonText}>Gallery</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Button Container for Camera and Gallery */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={launchCameraWithPermission}>
+              <Ionicons name="camera" size={20} color="white" style={styles.icon} />
+              <Text style={styles.buttonText}>Use Camera{'\n'}To Scan</Text>
+            </TouchableOpacity>
 
-      {imageUri && (
-        <View style={styles.imageContainer}>
-          <Image source={{uri: imageUri}} style={styles.previewImage} />
-        </View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={pickImageWithPermission}>
+              <Ionicons name="image" size={20} color="white" style={styles.icon} />
+              <Text style={styles.buttonText}>Upload Image{'\n'}From Gallery</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
 
+      {/* Loading Indicator while Processing Image */}
       {scanning ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0000ff" />
           <Text style={styles.loadingText}>Processing image...</Text>
         </View>
       ) : (
-        <FlatList
-          data={filteredData}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
-        />
+        <>
+          {/* Top Medicine Highlight */}
+          {topMedicine && (
+            <View style={styles.topMedicineContainer}>
+              <Text style={styles.topMedicineTitle}>Best Match:</Text>
+              <Text style={styles.topMedicineName}>{topMedicine['Medicine Name']}</Text>
+              
+            </View>
+          )}
+
+          {/* Results List */}
+          <FlatList
+            data={filteredData}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={styles.listContainer}
+          />
+        </>
       )}
     </View>
   );
@@ -306,17 +397,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+    paddingBottom: 100,
   },
+  icon: {
+    marginRight: 10,
+  },
+  headerContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 100,
+    marginBottom: 20,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+  },
+  tokensContainer: {
+    marginVertical: 20,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 5,
+    width: '90%',
+  },
+  tokensTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333',
+  },
+  tokensText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  
   buttonContainer: {
     flexDirection: 'row',
     marginBottom: 20,
   },
   button: {
     marginHorizontal: 10,
-    backgroundColor: '#007BFF',
+    backgroundColor: '#FF4D6D',
     paddingVertical: 15,
     paddingHorizontal: 25,
-    borderRadius: 5,
+    borderRadius: 18,
+    width: 150,
+    height: 70,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
@@ -344,6 +472,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    width: '100%',
+  },
+  listContainer: {
+    width: '100%',
+    paddingBottom: 50, // Additional bottom padding for the list
   },
   medicineName: {
     fontSize: 18,
@@ -356,6 +489,30 @@ const styles = StyleSheet.create({
   matchInfo: {
     fontSize: 12,
     color: '#888',
+  },
+  topMedicineContainer: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#e6f2ff',
+    borderRadius: 5,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  topMedicineTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#007BFF',
+    marginBottom: 5,
+  },
+  topMedicineName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  topMedicineMatches: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
   },
 });
 
